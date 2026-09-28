@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>당케 2.0 — AI 건강식생활 비서</title>
+<style>
+  :root{
+    --mint:#12B886; --mint-dark:#0CA678; --mint-light:#E6FCF5; --mint-soft:#C3FAE8;
+    --coral:#FF6B4A; --amber:#F59F00; --red:#FA5252; --green:#40C057; --blue:#1C7ED6;
+    --bg:#F4FAF7; --card:#FFFFFF; --ink:#1F2937; --sub:#6B7280; --line:#E5E7EB;
+    --shadow:0 2px 12px rgba(18,184,134,.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#E9F2EE;font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;color:var(--ink);display:flex;justify-content:center;min-height:100vh}
+  #phone{width:390px;max-width:100%;min-height:100vh;background:var(--bg);position:relative;box-shadow:0 0 40px rgba(0,0,0,.12);display:flex;flex-direction:column}
+  .statusbar{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:13px;font-weight:600;flex-shrink:0}
+  .statusbar .icons{display:flex;gap:5px;font-size:11px}
+  .screen{display:none;flex:1;overflow-y:auto;padding:0 18px 96px;animation:fadeIn .25s ease}
+  .screen.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .app-header{display:flex;align-items:center;justify-content:space-between;padding:8px 2px 12px}
+  .logo{font-size:22px;font-weight:800;color:var(--mint-dark)}
+  .logo span{color:var(--coral)}
+  .header-badges{display:flex;gap:8px;align-items:center}
+  .pill{background:var(--mint-light);color:var(--mint-dark);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px}
+  .bell{font-size:18px}
+  .card{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+  .card h3{font-size:15px;font-weight:700;margin-bottom:10px}
+  .card .sub{font-size:12px;color:var(--sub);line-height:1.5}
+  .btn{display:block;width:100%;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--mint);color:#fff}
+  .btn-primary:active{background:var(--mint-dark)}
+  .btn-coral{background:var(--coral);color:#fff}
+  .btn-ghost{background:var(--mint-light);color:var(--mint-dark)}
+  .btn-line{background:#fff;border:1.5px solid var(--mint);color:var(--mint-dark)}
+  .btn-row{display:flex;gap:10px}
+  .btn-row .btn{flex:1}
+  .btn-sm{padding:11px;font-size:13.5px;border-radius:12px}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:7px 13px;border-radius:999px;font-size:13px;font-weight:600;background:#fff;border:1.5px solid var(--line);cursor:pointer;color:var(--sub)}
+  .chip.on{background:var(--mint);border-color:var(--mint);color:#fff}
+  .chip-wrap{display:flex;flex-wrap:wrap;gap:8px}
+  .nutri{margin-bottom:10px}
+  .nutri-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
+  .bar{height:8px;background:#EEF2F0;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:99px;background:var(--mint);transition:width .4s}
+  .bar.warn i{background:var(--amber)}
+  .bar.danger i{background:var(--red)}
+  .trust{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px}
+  .trust.t-green{background:#E7F8F0;color:#0CA678}
+  .trust.t-blue{background:#E7F0FE;color:#1C7ED6}
+  .trust.t-yellow{background:#FFF4DE;color:#E8890C}
+  .trust.t-orange{background:#FFECE5;color:#E8590C}
+  .tl-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F1F3F2;font-size:13.5px}
+  .tl-row:last-child{border-bottom:none}
+  .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .dot.g{background:var(--green)} .dot.y{background:var(--amber)} .dot.r{background:var(--red)}
+  .tl-row .name{flex:1;font-weight:600}
+  .tl-row .val{font-size:12.5px;color:var(--sub)}
+  .ai-box{background:linear-gradient(135deg,#E6FCF5,#FFF6EE);border:1px solid #C3FAE8;border-radius:16px;padding:14px;display:flex;gap:10px;margin-bottom:14px}
+  .ai-face{width:34px;height:34px;border-radius:50%;background:var(--mint);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .ai-box p{font-size:13px;line-height:1.6}
+  .ai-box b{color:var(--mint-dark)}
+  .stepper{display:inline-flex;align-items:center;gap:14px;background:#F1F5F3;border-radius:999px;padding:6px 10px}
+  .stepper button{width:30px;height:30px;border-radius:50%;border:none;background:#fff;font-size:17px;font-weight:800;color:var(--mint-dark);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .stepper b{font-size:15px;min-width:20px;text-align:center}
+  .tabbar{position:sticky;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--line);display:flex;z-index:50;flex-shrink:0}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;color:var(--sub);cursor:pointer;border:none;background:none;font-family:inherit;font-weight:600}
+  .tab .ico{font-size:20px}
+  .tab.on{color:var(--mint-dark)}
+  .tab-scan{position:relative}
+  .tab-scan .fab{width:52px;height:52px;border-radius:50%;background:var(--coral);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;margin-top:-26px;box-shadow:0 4px 14px rgba(255,107,74,.4);border:4px solid #fff}
+  .scan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .scan-item{background:#fff;border-radius:16px;padding:18px 14px;text-align:center;box-shadow:var(--shadow);cursor:pointer;border:2px solid transparent}
+  .scan-item:active{border-color:var(--mint)}
+  .scan-item .ico{font-size:30px;margin-bottom:8px}
+  .scan-item b{font-size:14px;display:block;margin-bottom:3px}
+  .scan-item span{font-size:11.5px;color:var(--sub)}
+  .scan-item.full{grid-column:1/-1;display:flex;align-items:center;gap:14px;text-align:left;padding:16px}
+  .food{display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .food .f-ico{width:44px;height:44px;border-radius:12px;background:var(--mint-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .food .f-info{flex:1}
+  .food .f-info b{font-size:14px;display:block}
+  .food .f-info span{font-size:11.5px;color:var(--sub)}
+  .food .f-kcal{font-size:13px;font-weight:700}
+  .food.addable{cursor:pointer;border:1.5px solid transparent}
+  .food.addable:active{border-color:var(--mint)}
+  .combo-tag{display:inline-block;font-size:11px;font-weight:700;background:#FFF0EB;color:var(--coral);padding:3px 9px;border-radius:99px;margin-bottom:8px}
+  .vs{display:flex;align-items:center;gap:8px;margin:10px 0}
+  .vs .ln{flex:1;height:1px;background:var(--line)}
+  .vs span{font-size:11px;color:var(--sub);font-weight:700}
+  .timeline{position:relative;padding-left:26px}
+  .timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--mint-soft)}
+  .tl-item{position:relative;padding-bottom:16px}
+  .tl-item::before{content:"";position:absolute;left:-22px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--mint);border:2.5px solid #fff;box-shadow:0 0 0 2px var(--mint-soft)}
+  .tl-item .time{font-size:11px;color:var(--sub);font-weight:700}
+  .tl-item .body{background:#fff;border-radius:12px;padding:11px 13px;margin-top:4px;font-size:13px;box-shadow:var(--shadow)}
+  .tl-item .body small{display:block;color:var(--sub);font-size:11.5px;margin-top:2px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}
+  .field input,.field select{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;background:#fff}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--mint)}
+  .field-row{display:flex;gap:10px}
+  .field-row .field{flex:1}
+  .stars{font-size:20px;letter-spacing:2px;color:var(--amber)}
+  .pref-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F3F2;font-size:14px}
+  .pref-row:last-child{border:none}
+  .steps-dots{display:flex;gap:6px;justify-content:center;margin:4px 0 14px}
+  .steps-dots i{width:8px;height:8px;border-radius:50%;background:var(--line);transition:.3s}
+  .steps-dots i.on{background:var(--mint);width:22px;border-radius:99px}
+  .sec-title{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}
+  .sec-title h2{font-size:17px;font-weight:800}
+  .notice{font-size:11px;color:var(--sub);background:#F1F5F3;border-radius:10px;padding:10px 12px;line-height:1.5;margin-top:12px}
+  .back-link{border:none;background:none;font-size:22px;color:var(--ink);cursor:pointer;padding:4px 8px 4px 0}
+  .mini-chart{display:flex;align-items:flex-end;gap:8px;height:110px;padding:8px 2px 0}
+  .mini-chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;height:100%}
+  .mini-chart .stick{width:100%;border-radius:6px 6px 2px 2px;background:var(--mint-soft);position:relative}
+  .mini-chart .stick.over{background:var(--red)}
+  .mini-chart .stick.today{background:var(--mint);box-shadow:0 0 0 2px rgba(18,184,134,.2)}
+  .mini-chart .d{font-size:10px;color:var(--sub)}
+  .rec-card{border:1.5px solid var(--mint-soft);border-radius:14px;padding:13px;margin-bottom:10px;background:#FBFEFC}
+  .rec-card .r-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;gap:8px}
+  .rec-card b{font-size:14px}
+  .score{font-size:12px;font-weight:800;color:var(--mint-dark);background:var(--mint-light);padding:3px 10px;border-radius:99px;white-space:nowrap}
+  .rec-card ul{list-style:none;font-size:12.5px;color:var(--sub);line-height:1.7}
+  .rec-card ul li::before{content:"• ";color:var(--mint)}
+  /* 경고 배지 */
+  .warn-box{border-radius:14px;padding:12px 14px;margin-bottom:10px;font-size:12.5px;line-height:1.6;display:flex;gap:9px;align-items:flex-start}
+  .warn-box .w-ico{font-size:16px;flex-shrink:0}
+  .warn-box b{display:block;margin-bottom:2px;font-size:13px}
+  .w-over{background:#FFECEC;border:1px solid #FFC9C9;color:#B02525}
+  .w-spike{background:#FFF6E5;border:1px solid #FFD8A8;color:#97510B}
+  .w-sugar{background:#FFECF1;border:1px solid #FFC9D8;color:#A61E4D}
+  .w-ok{background:#E7F8F0;border:1px solid #C3FAE8;color:#0B7A5C}
+  /* 칼로리 카운트다운 */
+  .kcal-hero{background:linear-gradient(135deg,#0CA678,#12B886);border-radius:20px;padding:20px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden}
+  .kcal-hero.over{background:linear-gradient(135deg,#E03131,#FA5252)}
+  .kcal-hero .kh-label{font-size:12.5px;opacity:.9;font-weight:600}
+  .kcal-hero .kh-num{font-size:42px;font-weight:800;line-height:1.1;margin:4px 0}
+  .kcal-hero .kh-num small{font-size:17px;font-weight:700;opacity:.9}
+  .kcal-hero .kh-sub{font-size:12px;opacity:.92;line-height:1.6}
+  .ring{position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.12)}
+  .ring2{position:absolute;right:10px;bottom:-50px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08)}
+  /* 기간 탭 */
+  .seg{display:flex;background:#EEF2F0;border-radius:12px;padding:4px;margin-bottom:14px}
+  .seg button{flex:1;border:none;background:none;padding:10px;border-radius:9px;font-size:13.5px;font-weight:700;color:var(--sub);cursor:pointer;font-family:inherit}
+  .seg button.on{background:#fff;color:var(--mint-dark);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .sticky-sum{display:flex;gap:8px;margin-bottom:12px}
+  .stat{flex:1;background:#fff;border-radius:13px;padding:11px;box-shadow:var(--shadow);text-align:center}
+  .stat b{display:block;font-size:17px;font-weight:800}
+  .stat span{font-size:10.5px;color:var(--sub);font-weight:600}
+  .stat.g b{color:var(--mint-dark)} .stat.r b{color:var(--red)} .stat.y b{color:#E8890C}
+  /* 종이컵 */
+  .cup{display:inline-flex;flex-direction:column;align-items:center;gap:2px;font-size:9.5px;color:var(--sub)}
+  .cup svg{display:block}
+  .cup-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F1F3F2}
+  .cup-row:last-child{border:none}
+  .cup-ico{width:42px;height:42px;border-radius:12px;background:#FFF6E5;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .cup-info{flex:1}
+  .cup-info b{font-size:14px;display:block}
+  .cup-info span{font-size:11.5px;color:var(--sub)}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:rgba(31,41,55,.94);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:99;max-width:340px;text-align:center;line-height:1.5}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{text-align:center;padding:26px 10px;color:var(--sub);font-size:13px}
+  .empty .ico{font-size:34px;display:block;margin-bottom:8px;opacity:.6}
+  .food-pick{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:#F8FAF9;margin-bottom:8px;cursor:pointer;border:1.5px solid transparent}
+  .food-pick:active{border-color:var(--mint)}
+  .food-pick .fp-i{font-size:22px;width:32px;text-align:center}
+  .food-pick .fp-n{flex:1;font-size:13.5px;font-weight:600}
+  .food-pick .fp-n small{display:block;font-weight:500;color:var(--sub);font-size:11px;margin-top:1px}
+  .food-pick .fp-k{font-size:12.5px;font-weight:700;color:var(--mint-dark)}
+  .gi-tag{font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:5px;margin-left:5px;vertical-align:middle}
+  .gi-hi{background:#FFE3E3;color:#C92A2A}
+  .gi-mi{background:#FFF3BF;color:#977309}
+  .gi-lo{background:#D3F9D8;color:#2B8A3E}
+</style>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0CA678">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="당케">
+</head>
+<body>
+<div id="phone">
+  <div class="statusbar"><span>9:41</span><span class="icons">📶 🛜 🔋</span></div>
+<!-- ===================== 1) 등록(온보딩) — 첫 화면 ===================== -->
+<div class="screen active" id="scr-onboard">
+  <div class="app-header">
+    <div class="logo">당케<span>.</span></div>
+    <span class="pill" id="ob-step-label">1 / 3 정보 입력</span>
+  </div>
+  <div class="steps-dots"><i class="on"></i><i></i><i></i></div>
+
+  <div class="ai-box">
+    <div class="ai-face">🤖</div>
+    <p>시작하기 전에 <b>기본 정보만 입력</b>하면 하루 목표 칼로리를 계산해드릴게요. 건강정보는 나중에 추가할 수 있어요.</p>
+  </div>
+
+  <div class="card">
+    <h3>👤 기본 정보</h3>
+    <div class="field"><label>이름</label><input type="text" id="ob-name" value="김민수" placeholder="이름"></div>
+    <div class="field"><label>성별</label>
+      <div class="chip-wrap" id="ob-sex">
+        <span class="chip on" data-v="male">남성</span><span class="chip" data-v="female">여성</span>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>나이</label><input type="number" id="ob-age" value="48"></div>
+      <div class="field"><label>키 (cm)</label><input type="number" id="ob-height" value="172"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>몸무게 (kg)</label><input type="number" id="ob-weight" value="78"></div>
+      <div class="field"><label>활동량</label>
+        <select id="ob-activity">
+          <option value="1.2">거의 움직이지 않음</option>
+          <option value="1.45" selected>보통</option>
+          <option value="1.7">활동량 많음</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>직업 형태</label>
+      <div class="chip-wrap" id="ob-job">
+        <span class="chip on">사무직</span><span class="chip">현장직</span><span class="chip">자영업</span><span class="chip">주부</span><span class="chip">은퇴</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🎯 목표 설정</h3>
+    <div class="field"><label>체중 목표</label>
+      <div class="chip-wrap" id="ob-goal">
+        <span class="chip on" data-v="0.85">감량 (-15%)</span>
+        <span class="chip" data-v="1.0">체중 유지</span>
+        <span class="chip" data-v="1.1">증량</span>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:0"><label>건강 상태 (해당 항목 선택)</label>
+      <div class="chip-wrap" id="ob-health">
+        <span class="chip on" data-v="당뇨 전단계">당뇨 전단계</span>
+        <span class="chip" data-v="당뇨">당뇨</span>
+        <span class="chip on" data-v="고혈압 관리">고혈압 관리</span>
+        <span class="chip" data-v="고지혈증">고지혈증</span>
+        <span class="chip" data-v="복약 중">복약 중</span>
+        <span class="chip" data-v="인슐린 처방">인슐린 처방</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="ob-result" style="display:none;border:1.5px solid var(--mint-soft)">
+    <h3>🧮 당신의 하루 목표 칼로리</h3>
+    <div style="display:flex;align-items:baseline;gap:8px;margin:6px 0 10px">
+      <span class="kcal-bigtab" id="ob-kcal" style="font-size:38px;font-weight:800;color:var(--mint-dark);line-height:1">0</span>
+      <span style="font-size:15px;font-weight:700;color:var(--sub)">kcal / 일</span>
+    </div>
+    <div class="tl-row"><span class="name">기초대사량 (BMR)</span><span class="val" id="ob-bmr">-</span></div>
+    <div class="tl-row"><span class="name">활동대사량 (TDEE)</span><span class="val" id="ob-tdee">-</span></div>
+    <div class="tl-row" style="border:none"><span class="name">권장 탄수화물 · 나트륨</span><span class="val" id="ob-macro">-</span></div>
+    <div class="notice">계산식은 Mifflin-St Jeor 공식을 사용한 참고값입니다. 의료적 진단이 아니며, 정확한 목표는 전문의·영양사와 상담하세요.</div>
+  </div>
+
+  <button class="btn btn-primary" id="ob-cta" onclick="onboardCalc()">목표 칼로리 계산하기</button>
+  <br>
+  <button class="btn btn-ghost" id="ob-start" style="display:none" onclick="onboardStart()">당케 시작하기 →</button>
+  <div class="notice">🔒 건강정보는 민감정보로, 별도 동의·접근권한·암호화 및 개인정보보호 정책이 적용됩니다.</div>
+</div>
+
+<!-- ===================== 2) 홈 ===================== -->
+<div class="screen" id="scr-home">
+  <div class="app-header">
+    <div class="logo">당케<span>.</span></div>
+    <div class="header-badges"><span class="pill" id="home-health">당뇨 전단계 관리 중</span></div>
+  </div>
+
+  <div class="kcal-hero" id="kcal-hero">
+    <div class="ring"></div><div class="ring2"></div>
+    <div class="kh-label" id="kh-label">오늘 남은 칼로리</div>
+    <div class="kh-num" id="kh-remain">0<small> kcal</small></div>
+    <div class="kh-sub" id="kh-sub">목표 0 · 섭취 0 · 잔여 0</div>
+    <div class="bar" style="background:rgba(255,255,255,.3);margin-top:12px"><i id="kh-bar" style="width:0%;background:#fff"></i></div>
+  </div>
+
+  <div id="home-warnings"></div>
+
+  <div class="ai-box">
+    <div class="ai-face">🤖</div>
+    <p id="home-ai">오늘의 식사를 기록해보세요.</p>
+  </div>
+
+  <div class="btn-row" style="margin-bottom:14px">
+    <button class="btn btn-primary btn-sm" onclick="go('add')">＋ 식사 추가</button>
+    <button class="btn btn-line btn-sm" onclick="go('add','drink')">🥤 음료(종이컵)</button>
+  </div>
+
+  <div class="card">
+    <h3>오늘 먹은 것 <span style="font-size:12px;color:var(--sub);font-weight:500" id="today-count">· 0개</span></h3>
+    <div id="today-meals"></div>
+  </div>
+
+  <div class="card">
+    <h3>오늘의 영양 요약</h3>
+    <div class="nutri"><div class="nutri-top"><b>탄수화물</b><span id="n-carb">0 / 0 g</span></div><div class="bar"><i id="b-carb" style="width:0%"></i></div></div>
+    <div class="nutri"><div class="nutri-top"><b>당류</b><span id="n-sugar">0 / 0 g</span></div><div class="bar warn"><i id="b-sugar" style="width:0%"></i></div></div>
+    <div class="nutri" style="margin-bottom:0"><div class="nutri-top"><b>나트륨</b><span id="n-sodium">0 / 0 mg</span></div><div class="bar danger"><i id="b-sodium" style="width:0%"></i></div></div>
+  </div>
+</div>
+
+<!-- ===================== 3) 음식 추가 ===================== -->
+<div class="screen" id="scr-add">
+  <div class="app-header">
+    <button class="back-link" onclick="go('home')">←</button>
+    <div class="logo" style="font-size:18px">음식 추가<span>.</span></div>
+    <span class="pill" id="add-kcal-left">남은 0</span>
+  </div>
+
+  <div class="seg" id="add-cat">
+    <button class="on" data-cat="home" onclick="setCat('home')">🍲 가정식</button>
+    <button data-cat="store" onclick="setCat('store')">🏪 편의점·외식</button>
+    <button data-cat="drink" onclick="setCat('drink')">🥤 음료(종이컵)</button>
+  </div>
+
+  <div class="field"><input type="text" id="add-search" placeholder="🔍 음식 이름 검색 (예: 김치찌개)" oninput="renderFoodList()"></div>
+
+  <div id="add-panel"></div>
+  <div class="food-pick" id="add-chip" style="display:none"></div>
+  <div id="add-list"></div>
+  <div class="notice" id="add-note">가정식 수치는 식약처·민간 영양 DB 기준 대표값입니다. 조리법에 따라 달라질 수 있어요.</div>
+</div>
+
+<!-- ===================== 4) 기간 관리 (일/주/월) ===================== -->
+<div class="screen" id="scr-period">
+  <div class="app-header">
+    <div class="logo">기간 관리<span>.</span></div>
+    <span class="pill" id="period-date">오늘</span>
+  </div>
+  <div class="seg" id="period-seg">
+    <button class="on" data-p="day" onclick="setPeriod('day')">일간</button>
+    <button data-p="week" onclick="setPeriod('week')">주간</button>
+    <button data-p="month" onclick="setPeriod('month')">월간</button>
+  </div>
+  <div class="sticky-sum" id="period-stats"></div>
+  <div class="card">
+    <h3 id="period-chart-title">칼로리 추이</h3>
+    <div id="period-chart"></div>
+    <div class="notice" id="period-note"></div>
+  </div>
+  <div class="card">
+    <h3 id="period-list-title">기간 기록</h3>
+    <div id="period-list"></div>
+  </div>
+</div>
+
+<!-- ===================== 5) 기록 ===================== -->
+<div class="screen" id="scr-record">
+  <div class="app-header">
+    <div class="logo">기록<span>.</span></div>
+    <span class="pill" id="record-date">오늘</span>
+  </div>
+
+  <div class="card">
+    <h3>🩸 혈당 · 💓 혈압 기록</h3>
+    <div class="field-row">
+      <div class="field" style="margin-bottom:10px"><label>혈당 (mg/dL)</label><input type="number" id="in-glucose" placeholder="예: 138"></div>
+      <div class="field" style="margin-bottom:10px"><label>측정 시점</label>
+        <select id="in-gtype"><option>공복</option><option selected>식후</option><option>취침 전</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field" style="margin-bottom:10px"><label>수축기</label><input type="number" id="in-sys" placeholder="128"></div>
+      <div class="field" style="margin-bottom:10px"><label>이완기</label><input type="number" id="in-dia" placeholder="84"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="saveVitals()">기록 저장</button>
+  </div>
+
+  <div class="card">
+    <h3>오늘의 타임라인</h3>
+    <div class="timeline" id="record-timeline"></div>
+  </div>
+
+  <div class="card">
+    <h3>이번 주 공복혈당 · 식후혈당</h3>
+    <div id="record-chart"></div>
+    <div class="notice" style="margin-top:12px">📊 식사와 수치의 관계는 <b>참고용 패턴 분석</b>이며, 특정 음식이 수치를 직접 발생시켰다고 단정하지 않습니다.</div>
+  </div>
+</div>
+
+<!-- ===================== 6) 스캔 ===================== -->
+<div class="screen" id="scr-scan">
+  <div class="app-header">
+    <div class="logo">스캔<span>.</span></div>
+    <span class="pill">📷</span>
+  </div>
+  <div class="ai-box"><div class="ai-face">🤖</div><p>먹을까 고민되는 음식을 <b>찍어보세요</b>. 분석 후 바로 오늘 칼로리에 반영해드릴게요.</p></div>
+  <div class="scan-grid">
+    <div class="scan-item" onclick="scanDemo('바코드')"><div class="ico">🔳</div><b>바코드 촬영</b><span>제품 뒷면 바코드</span></div>
+    <div class="scan-item" onclick="scanDemo('영양성분표')"><div class="ico">🧾</div><b>영양성분표 촬영</b><span>OCR 자동 인식</span></div>
+    <div class="scan-item" onclick="scanDemo('음식 사진')"><div class="ico">🍜</div><b>음식 사진</b><span>AI 음식 인식</span></div>
+    <div class="scan-item" onclick="scanDemo('검색')"><div class="ico">🔍</div><b>검색</b><span>식품 DB 검색</span></div>
+    <div class="scan-item full" onclick="go('add')"><div class="ico">🏠</div><div><b>가정식 직접 입력</b><br><span>국·찌개·공기밥 등 집밥도 기록</span></div></div>
+  </div>
+  <div class="sec-title"><h2>스캔 신뢰도 안내</h2></div>
+  <div class="card" style="font-size:12.5px;line-height:2">
+    <span class="trust t-green">🟢 공식 확인값</span> 제조사 표기 영양성분<br>
+    <span class="trust t-blue">🔵 사용자 확인값</span> 사용자가 직접 입력·검증<br>
+    <span class="trust t-yellow">🟡 대표값</span> DB 평균값<br>
+    <span class="trust t-orange">🟠 추정값</span> 사진 분석 추정 — "추정 영양정보입니다"
+  </div>
+</div>
+
+<!-- ===================== 7) 마이 ===================== -->
+<div class="screen" id="scr-my">
+  <div class="app-header">
+    <div class="logo">마이<span>.</span></div>
+    <span class="pill">⚙️</span>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div style="width:54px;height:54px;border-radius:50%;background:var(--mint-light);display:flex;align-items:center;justify-content:center;font-size:26px">🙂</div>
+      <div><b style="font-size:17px" id="my-name">-</b><div class="sub" style="font-size:12.5px" id="my-basic">-</div></div>
+    </div>
+    <div class="tl-row"><span class="name">🎯 하루 목표 칼로리</span><span class="val" id="my-kcal">-</span></div>
+    <div class="tl-row"><span class="name">🍚 권장 탄수화물</span><span class="val" id="my-carb">-</span></div>
+    <div class="tl-row"><span class="name">🧂 권장 나트륨</span><span class="val" id="my-sodium">-</span></div>
+    <div class="tl-row" style="border:none"><span class="name">🩺 건강 상태</span><span class="val" id="my-health">-</span></div>
+    <br>
+    <button class="btn btn-ghost" onclick="resetAll()">프로필 다시 설정 / 초기화</button>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,#0CA678,#12B886);color:#fff">
+    <h3 style="color:#fff">👑 당케 프리미엄</h3>
+    <ul style="list-style:none;font-size:13px;line-height:2;opacity:.95;margin-bottom:12px">
+      <li>✦ AI 개인 식사 추천</li><li>✦ 혈당 스파이크 예측 리포트</li><li>✦ 음식 조합 분석</li>
+      <li>✦ 장보기 추천</li><li>✦ 장기 식습관 분석</li>
+    </ul>
+    <button class="btn" style="background:#fff;color:var(--mint-dark)" onclick="toast('프리미엄 구독 화면으로 이동합니다')">7일 무료 체험하기</button>
+  </div>
+  <div class="card">
+    <div class="tl-row"><span class="name">🔒 개인정보·건강정보 동의 관리</span><span class="val">›</span></div>
+    <div class="tl-row"><span class="name">🔔 알림 설정</span><span class="val">›</span></div>
+    <div class="tl-row" style="border:none"><span class="name">❓ 고객 지원</span><span class="val">›</span></div>
+  </div>
+  <div class="notice">당케는 의료기기가 아니며, 의료적 진단이나 치료를 대신하지 않습니다. 건강 관련 의사결정은 반드시 전문의와 상담하세요.<br><br>당케 2.0 · 먹고 싶은 음식은 먹되, 더 현명하게 🌿</div>
+</div>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab on" data-scr="home" onclick="go('home')"><span class="ico">🏠</span>홈</button>
+    <button class="tab" data-scr="period" onclick="go('period')"><span class="ico">📊</span>기간관리</button>
+    <button class="tab tab-scan" onclick="go('scan')"><span class="fab">📷</span></button>
+    <button class="tab" data-scr="record" onclick="go('record')"><span class="ico">📋</span>기록</button>
+    <button class="tab" data-scr="my" onclick="go('my')"><span class="ico">👤</span>마이</button>
+  </nav>
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+/* ================= 음식 DB (식약처·민간 영양DB 기준 대표값) ================= */
+/* idx: 표시명 / kcal / carb / sugar / sod / gi(0~100) / unit / 신뢰도 */
+const FOOD = {
+  /* ---- 가정식 ---- */
+  rice:      {n:'공기밥 (쌀밥 200g)',   ico:'🍚', kcal:290, carb:63, sugar:0.5, sod:5,    gi:73, unit:'공기', trust:'y', cat:'home'},
+  ricehalf:  {n:'공기밥 1/2 (100g)',   ico:'🍚', kcal:145, carb:31.5, sugar:0.3, sod:3,   gi:73, unit:'1/2공기', trust:'y', cat:'home'},
+  multirice: {n:'현미밥 (200g)',       ico:'🍙', kcal:344, carb:71, sugar:0.5, sod:5,    gi:55, unit:'공기', trust:'y', cat:'home'},
+  kimchi_st: {n:'김치찌개 (1인분 400g)', ico:'🍲', kcal:180, carb:11, sugar:4, sod:1960, gi:40, unit:'인분', trust:'y', cat:'home'},
+  doenjang:  {n:'된장국 (1인분 200g)', ico:'🍜', kcal:76,  carb:10, sugar:3, sod:900,  gi:45, unit:'인분', trust:'y', cat:'home'},
+  miyeok:    {n:'미역국 (1인분 200g)', ico:'🍲', kcal:60,  carb:5,  sugar:1, sod:750,  gi:40, unit:'인분', trust:'y', cat:'home'},
+  bulgogi:   {n:'소불고기 (1인분 150g)', ico:'🥩', kcal:310, carb:12, sugar:8, sod:620, gi:45, unit:'인분', trust:'y', cat:'home'},
+  eggfry:    {n:'계란후라이 1개',       ico:'🍳', kcal:105, carb:0.6, sugar:0.3, sod:180, gi:0, unit:'개', trust:'y', cat:'home'},
+  eggroll:   {n:'달걀말이 2조각',       ico:'🥚', kcal:95,  carb:1.5, sugar:0.6, sod:200, gi:0, unit:'2조각', trust:'y', cat:'home'},
+  namul:     {n:'나물무침 (1접시 70g)', ico:'🥬', kcal:55,  carb:4,  sugar:1.2, sod:280, gi:15, unit:'접시', trust:'y', cat:'home'},
+  kimchi:    {n:'배추김치 (1접시 50g)', ico:'🥬', kcal:18,  carb:3,  sugar:1, sod:490,  gi:15, unit:'접시', trust:'y', cat:'home'},
+  tofu:      {n:'두부부침 (1인분 100g)', ico:'⬜', kcal:110, carb:3,  sugar:0.5, sod:230, gi:15, unit:'인분', trust:'y', cat:'home'},
+  jjimdak:   {n:'찜닭 (1인분)',         ico:'🍗', kcal:420, carb:28, sugar:14, sod:1250, gi:60, unit:'인분', trust:'y', cat:'home'},
+  japchae:   {n:'잡채 (1접시)',         ico:'🍝', kcal:230, carb:32, sugar:8, sod:640, gi:65, unit:'접시', trust:'y', cat:'home'},
+  chickenst: {n:'닭볶음탕 (1인분)',      ico:'🍲', kcal:390, carb:18, sugar:8, sod:1100, gi:55, unit:'인분', trust:'y', cat:'home'},
+  seaweed:   {n:'김 (1봉 5g)',          ico:'🌿', kcal:30,  carb:2,  sugar:0.1, sod:120, gi:15, unit:'봉', trust:'y', cat:'home'},
+  /* ---- 편의점·외식 ---- */
+  tri:       {n:'삼각김밥 (1개)',       ico:'🍙', kcal:230, carb:41, sugar:6, sod:480, gi:78, unit:'개', trust:'y', cat:'store'},
+  cupramen:  {n:'컵라면 (1개)',         ico:'🍜', kcal:310, carb:47, sugar:4, sod:1590, gi:73, unit:'개', trust:'y', cat:'store'},
+  bagramen:  {n:'봉지라면 (1봉)',       ico:'🍜', kcal:505, carb:80, sugar:6, sod:1790, gi:73, unit:'봉', trust:'y', cat:'store'},
+  iebab:     {n:'즉석밥 (210g)',        ico:'🍚', kcal:310, carb:68, sugar:0.6, sod:5,  gi:73, unit:'개', trust:'y', cat:'store'},
+  dosirak:   {n:'편의점 도시락 (1개)',  ico:'🍱', kcal:620, carb:88, sugar:12, sod:1350, gi:72, unit:'개', trust:'y', cat:'store'},
+  egg2:      {n:'구운계란 (2개)',       ico:'🥚', kcal:140, carb:1.5, sugar:0.6, sod:250, gi:0, unit:'2개', trust:'y', cat:'store'},
+  kimbap:    {n:'김밥 (1줄)',           ico:'🍙', kcal:480, carb:78, sugar:8, sod:950, gi:75, unit:'줄', trust:'y', cat:'store'},
+  tteok:     {n:'떡볶이 (1인분)',       ico:'🌶️', kcal:400, carb:76, sugar:18, sod:1150, gi:80, unit:'인분', trust:'y', cat:'store'},
+  burger:    {n:'햄버거 (1개)',         ico:'🍔', kcal:530, carb:52, sugar:11, sod:1050, gi:70, unit:'개', trust:'y', cat:'store'},
+  chicken:   {n:'후라이드치킨 (2조각)',  ico:'🍗', kcal:560, carb:18, sugar:3, sod:1000, gi:60, unit:'2조각', trust:'y', cat:'store'},
+  pizza:     {n:'피자 (2조각)',         ico:'🍕', kcal:560, carb:62, sugar:9, sod:1300, gi:70, unit:'2조각', trust:'y', cat:'store'},
+  bread:     {n:'식빵 (2장)',           ico:'🍞', kcal:250, carb:46, sugar:6, sod:380, gi:75, unit:'2장', trust:'y', cat:'store'},
+  breasts:   {n:'닭가슴살 (100g)',      ico:'🍗', kcal:110, carb:1, sugar:0, sod:60, gi:0, unit:'팩', trust:'y', cat:'store'},
+  cvsalad:   {n:'닭가슴살 샐러드',      ico:'🥗', kcal:180, carb:9, sugar:3, sod:320, gi:25, unit:'팩', trust:'y', cat:'store'},
+  /* ---- 음료 (종이컵 = 약 180ml) — 종이컵 단위 입력 ---- */
+  mixcoffee: {n:'믹스커피 (1봉)',        ico:'☕', kcal:60,  carb:11, sugar:9, sod:35,  gi:70, unit:'잔', trust:'y', cat:'drink', perCup:1},
+  cola:      {n:'콜라',                ico:'🥤', kcal:92,  carb:23, sugar:22, sod:10, gi:70, unit:'잔', trust:'y', cat:'drink', perCup:1},
+  cider:     {n:'사이다',              ico:'🥤', kcal:88,  carb:22, sugar:21, sod:15, gi:70, unit:'잔', trust:'y', cat:'drink', perCup:1},
+  colazero:  {n:'제로 콜라',            ico:'🥤', kcal:0,   carb:0,  sugar:0, sod:10, gi:0,  unit:'잔', trust:'y', cat:'drink', perCup:1},
+  americano: {n:'아메리카노 (무가당)',    ico:'☕', kcal:5,   carb:1,  sugar:0, sod:5,  gi:0,  unit:'잔', trust:'y', cat:'drink', perCup:1},
+  latte:     {n:'카페라떼',            ico:'☕', kcal:150, carb:12, sugar:11, sod:90, gi:55, unit:'잔', trust:'y', cat:'drink', perCup:1},
+  juice:     {n:'과일주스 (오렌지)',     ico:'🧃', kcal:110, carb:26, sugar:22, sod:5, gi:65, unit:'잔', trust:'y', cat:'drink', perCup:1},
+  soymilk:   {n:'무가당 두유',          ico:'🥛', kcal:90,  carb:6,  sugar:1, sod:120, gi:30, unit:'잔', trust:'y', cat:'drink', perCup:1},
+  makgeolli: {n:'막걸리',             ico:'🍶', kcal:130, carb:14, sugar:5, sod:10, gi:60, unit:'잔', trust:'y', cat:'drink', perCup:1}
+};
+const CUP_ML = 180; // 종이컵 1잔 ≈ 180ml
+
+/* ================= 상태 저장 ================= */
+const LS='dangke_v2';
+let S = load();
+function load(){
+  try{ const r=localStorage.getItem(LS); if(r) return JSON.parse(r); }catch(e){}
+  return null;
+}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
+
+function todayKey(d){ d=d||new Date(); return d.toISOString().slice(0,10); }
+function dOffset(n){ const d=new Date(); d.setDate(d.getDate()+n); return todayKey(d); }
+
+/* 기본 프로필 + 2~4주 더미 시드 */
+function seedDefaults(){
+  return {
+    profile:{ name:'김민수', sex:'male', age:48, height:172, weight:78, act:'1.45', job:'사무직',
+              goalFactor:0.85, health:['당뇨 전단계','고혈압 관리'] },
+    target: null, targetKcal: null,
+    meals: {},           // { 'YYYY-MM-DD': [ {id,key,name,ico,qty,kcal,carb,sugar,sod,gi,cat,trust,time} ] }
+    vitals: {},          // { 'YYYY-MM-DD': [ {t:'08:50',type:'식후',glucose:142} or {t:'21:30',sys:128,dia:84} ] }
+    onboarded:false
+  };
+}
+
+function makeMeal(key,qty,time,extra){
+  const f=FOOD[key];
+  return {id:'m'+Math.random().toString(36).slice(2,8), key, name:f.n, ico:f.ico,
+    qty, unit:f.unit, cat:f.cat, trust:f.trust,
+    kcal:Math.round(f.kcal*qty), carb:+(f.carb*qty).toFixed(1), sugar:+(f.sugar*qty).toFixed(1),
+    sod:Math.round(f.sod*qty), gi:f.gi, time, ...(extra||{})};
+}
+
+function seedDummy(){
+  S.meals={}; S.vitals={};
+  const plan=[
+    [0, [['rice',1,'08:10'],['doenjang',1,'08:10'],['egg2',1,'08:10'],['mixcoffee',2,'09:00']]],
+    [-1,[['multirice',1,'12:20'],['kimchi_st',1,'12:20'],['namul',1,'12:20'],['mixcoffee',3,'15:00'],['cupramen',1,'19:30'],['tri',1,'19:30']]],
+    [-2,[['iebab',1,'08:00'],['breasts',1,'08:00'],['cola',3,'13:00'],['dosirak',1,'12:40'],['tteok',1,'18:40']]],
+    [-3,[['rice',1,'12:00'],['bulgogi',1,'12:00'],['kimchi',1,'12:00'],['chicken',1,'20:00'],['cider',2,'20:00']]],
+    [-4,[['ricehalf',1,'08:00'],['miyeok',1,'08:00'],['eggfry',1,'08:00'],['mixcoffee',2,'10:00'],['kimbap',1,'13:00'],['colazero',1,'13:00'],['pizza',1,'19:00']]],
+    [-5,[['iebab',1,'12:10'],['chickenst',1,'19:10'],['ricehalf',1,'19:10'],['latte',1,'14:30']]],
+    [-6,[['tri',2,'09:00'],['mixcoffee',1,'09:00'],['bagramen',1,'20:00'],['egg2',1,'20:00']]],
+    [-7,[['rice',1,'12:30'],['japchae',1,'12:30'],['jjimdak',1,'19:00'],['cola',2,'19:00']]],
+    [-8,[['cvsalad',1,'12:00'],['soymilk',1,'12:00'],['burger',1,'19:30'],['cider',2,'19:30']]],
+    [-9,[['ricehalf',1,'08:00'],['doenjang',1,'08:00'],['namul',1,'08:00'],['mixcoffee',1,'09:30'],['cupramen',1,'19:40'],['egg2',1,'19:40']]],
+    [-10,[['iebab',1,'12:00'],['tofu',1,'12:00'],['kimchi',1,'12:00'],['chicken',2,'20:10']]],
+    [-11,[['bread',1,'08:20'],['mixcoffee',2,'08:20'],['dosirak',1,'12:50'],['colazero',2,'12:50'],['rice',1,'19:00'],['kimchi_st',1,'19:00']]],
+    [-13,[['rice',1,'12:00'],['bulgogi',1,'12:00'],['mixcoffee',3,'15:00'],['tteok',1,'18:30']]],
+    [-15,[['iebab',1,'12:00'],['breasts',1,'12:00'],['cvsalad',1,'12:00'],['colazero',1,'12:00'],['mixcoffee',2,'16:00'],['ricehalf',1,'19:00'],['miyeok',1,'19:00']]],
+    [-17,[['tri',2,'08:30'],['cola',3,'12:30'],['pizza',1,'19:00'],['ricehalf',1,'19:00']]],
+    [-20,[['multirice',1,'12:00'],['kimchi_st',1,'12:00'],['namul',1,'12:00'],['mixcoffee',2,'15:00'],['kimbap',1,'19:30']]],
+    [-24,[['rice',1,'12:10'],['jjimdak',1,'19:10'],['mixcoffee',1,'09:00'],['cola',2,'13:00']]],
+    [-27,[['iebab',1,'08:00'],['egg2',1,'08:00'],['mixcoffee',2,'10:00'],['dosirak',1,'13:00'],['bagramen',1,'20:00']]]
+  ];
+  plan.forEach(([off,items])=>{
+    const k=dOffset(off); S.meals[k]=items.map(it=>makeMeal(it[0],it[1],it[2]));
+  });
+  const gv=[[-6,96,'공복'],[0,108,'공복'],[-1,104,'공복'],[-2,112,'공복'],[-3,118,'공복'],[-4,101,'공복'],[-5,106,'공복'],
+            [0,148,'식후'],[-1,142,'식후'],[-2,158,'식후'],[-3,166,'식후'],[-4,138,'식후'],[-5,145,'식후']];
+  gv.forEach(([off,v,t])=>{
+    const k=dOffset(off); S.vitals[k]=S.vitals[k]||[];
+    S.vitals[k].push({t: t==='공복'?'08:50':'13:40', type:t, glucose:v});
+  });
+  [[0,128,84],[0,138,88],[-1,132,86],[-2,126,82]].forEach(([off,sy,di])=>{
+    const k=dOffset(off); S.vitals[k]=S.vitals[k]||[];
+    S.vitals[k].push({t:'21:30', sys:sy, dia:di});
+  });
+}
+
+/* ================= 칼로리 계산 (Mifflin-St Jeor) ================= */
+function calcTarget(){
+  const p=S.profile;
+  const bmr = p.sex==='male'
+    ? 10*p.weight + 6.25*p.height - 5*p.age + 5
+    : 10*p.weight + 6.25*p.height - 5*p.age - 161;
+  const tdee = bmr * parseFloat(p.act);
+  const target = Math.round((tdee * p.goalFactor)/10)*10;
+  const carb = Math.round(target*0.55/4/5)*5;      // 탄수화물 55%
+  const sodium = 2000;                              // WHO 권장 2,000mg
+  const sugar = Math.round(target*0.10/4/5)*5;      // 당류 10% 이내
+  return {bmr:Math.round(bmr), tdee:Math.round(tdee), target, carb, sodium, sugar};
+}
+
+/* ================= 유틸 ================= */
+function dayTotals(k){
+  const list=S.meals[k]||[];
+  return list.reduce((a,m)=>({kcal:a.kcal+m.kcal, carb:a.carb+m.carb, sugar:a.sugar+m.sugar,
+    sod:a.sod+m.sod, maxGi:Math.max(a.maxGi,m.gi||0), n:a.n+1}),
+    {kcal:0,carb:0,sugar:0,sod:0,maxGi:0,n:0});
+}
+function go(name, cat){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('scr-'+name);
+  el.classList.add('active'); el.scrollTop=0;
+  const tabMap={onboard:'my',home:'home',add:'home',period:'period',record:'record',scan:'home',my:'my'};
+  document.querySelectorAll('.tab[data-scr]').forEach(t=>t.classList.toggle('on', t.dataset.scr===tabMap[name]));
+  if(name==='add'){ setCat(cat||curCat); document.getElementById('add-kcal-left').textContent='남은 '+Math.max(0,targetKcal()-dayTotals(todayKey()).kcal)+' kcal'; }
+  if(name==='home') renderHome();
+  if(name==='period') renderPeriod();
+  if(name==='record') renderRecord();
+  if(name==='my') renderMy();
+}
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2300);
+}
+function targetKcal(){ return S.target? S.target.target : 2000; }
+function num(id){ const el=document.getElementById(id); return el? el.value : ''; }
+
+/* ================= 온보딩 ================= */
+function bindChips(groupId, single){
+  const g=document.getElementById(groupId); if(!g) return;
+  g.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+    if(single){ g.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); c.classList.add('on'); }
+    else c.classList.toggle('on');
+    if(document.getElementById('ob-result').style.display==='block') onboardCalc();
+  }));
+}
+function readObProfile(){
+  const sexChip=document.querySelector('#ob-sex .chip.on');
+  const goalChip=document.querySelector('#ob-goal .chip.on');
+  const health=[...document.querySelectorAll('#ob-health .chip.on')].map(c=>c.dataset.v);
+  return {
+    name: num('ob-name')||'사용자',
+    sex: sexChip? sexChip.dataset.v : 'male',
+    age: +num('ob-age')||40,
+    height: +num('ob-height')||170,
+    weight: +num('ob-weight')||70,
+    act: num('ob-activity')||'1.45',
+    job: (document.querySelector('#ob-job .chip.on')||{}).textContent||'사무직',
+    goalFactor: goalChip? parseFloat(goalChip.dataset.v) : 0.85,
+    health: health.length? health : ['고혈압 관리']
+  };
+}
+function onboardCalc(){
+  S.profile=readObProfile();
+  S.target=calcTarget();
+  document.getElementById('ob-kcal').textContent=S.target.target.toLocaleString();
+  document.getElementById('ob-bmr').textContent=S.target.bmr.toLocaleString()+' kcal';
+  document.getElementById('ob-tdee').textContent=S.target.tdee.toLocaleString()+' kcal';
+  document.getElementById('ob-macro').textContent='탄수화물 '+S.target.carb+'g · 나트륨 '+S.target.sodium+'mg';
+  document.getElementById('ob-result').style.display='block';
+  document.getElementById('ob-start').style.display='block';
+  document.getElementById('ob-cta').textContent='다시 계산하기';
+  toast('하루 목표 칼로리 '+S.target.target.toLocaleString()+' kcal 로 설정했어요');
+  document.getElementById('ob-result').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function onboardStart(){
+  S.onboarded=true; save(); buildAll(); go('home');
+  toast(S.profile.name+'님, 당케를 시작합니다 🌿');
+}
+function resetAll(){
+  if(confirm('모든 기록과 프로필을 초기화하고 처음부터 시작할까요?')){
+    localStorage.removeItem(LS); S=seedDefaults(); seedDummy(); S.onboarded=true; save(); buildAll(); go('home');
+    toast('초기화되었습니다');
+  }
+}
+
+/* ================= 홈 ================= */
+function renderHome(){
+  const K=todayKey(), t=dayTotals(K), T=S.target||calcTarget();
+  S.target=T;
+  const remain=T.target - t.kcal;
+  document.getElementById('home-health').textContent=(S.profile.health||[]).join(' · ')+' 관리 중';
+  const hero=document.getElementById('kcal-hero');
+  hero.classList.toggle('over', remain<0);
+  document.getElementById('kh-label').textContent = remain<0 ? '오늘 초과 칼로리' : '오늘 남은 칼로리';
+  document.getElementById('kh-remain').innerHTML = Math.abs(remain).toLocaleString()+'<small> kcal</small>';
+  document.getElementById('kh-sub').textContent='목표 '+T.target.toLocaleString()+' · 섭취 '+t.kcal.toLocaleString()+' · 잔여 '+(remain<0?('-'+Math.abs(remain).toLocaleString()):remain.toLocaleString());
+  document.getElementById('kh-bar').style.width=Math.min(100, t.kcal/T.target*100)+'%';
+
+  // 경고 영역
+  const W=[];
+  if(remain<0) W.push(['w-over','🚨','칼로리 초과','오늘 목표보다 <b>'+Math.abs(remain).toLocaleString()+' kcal</b> 초과했습니다. 저녁은 가볍게, 내일로 균형을 맞춰보세요.']);
+  else if(remain<T.target*0.15) W.push(['w-over','⚠️','칼로리 거의 소진','남은 칼로리가 <b>'+remain.toLocaleString()+' kcal</b> 뿐이에요. 남은 끼니는 저칼로리로 구성하세요.']);
+  if(t.sod>T.sodium) W.push(['w-spike','🧂','나트륨 초과','오늘 나트륨 <b>'+t.sod.toLocaleString()+'mg</b> (권장 '+T.sodium.toLocaleString()+'mg). 다음 끼니는 국물·장류를 줄여보세요.']);
+  else if(t.sod>T.sodium*0.8) W.push(['w-spike','🧂','나트륨 주의','오늘 나트륨이 권장량의 <b>'+Math.round(t.sod/T.sodium*100)+'%</b>입니다.']);
+  if(t.sugar>T.sugar) W.push(['w-sugar','🍬','당류 초과·혈당 스파이크 예상','오늘 당류 <b>'+t.sugar.toFixed(1)+'g</b> (권장 '+T.sugar+'g). 단순당은 식후 혈당을 빠르게 올릴 수 있어요.']);
+  if(t.maxGi>=70) W.push(['w-spike','⚡','고혈당지수(GI) 음식 섭취','오늘 GI 70 이상 음식이 포함됐습니다. <b>식후 30분 걷기</b>가 혈당 스파이크 완화에 도움이 됩니다.']);
+  const dv=S.vitals[K]||[];
+  const maxG=Math.max(0,...dv.filter(v=>v.glucose).map(v=>v.glucose));
+  if(maxG>=180) W.push(['w-sugar','🩸','혈당 특히 높음 경고','오늘 기록된 혈당 <b>'+maxG+' mg/dL</b>은 높은 수준입니다. 수치가 반복되면 반드시 전문의와 상담하세요.']);
+  else if(maxG>=140) W.push(['w-spike','🩸','식후 혈당 상승','최고 혈당 <b>'+maxG+' mg/dL</b>. 다음 식사는 채소·단백질을 먼저 드셔보세요.']);
+  const cx=document.getElementById('home-warnings');
+  if(W.length){
+    cx.innerHTML=W.map(w=>'<div class="warn-box '+w[0]+'"><span class="w-ico">'+w[1]+'</span><div><b>'+w[2]+'</b>'+w[3]+'</div></div>').join('');
+  } else if(t.n>0){
+    cx.innerHTML='<div class="warn-box w-ok"><span class="w-ico">✅</span><div><b>오늘 목표 범위 안</b>칼로리·나트륨·당류 모두 권장 범위 안입니다. 잘 하고 계세요!</div></div>';
+  } else cx.innerHTML='';
+
+  // AI 코멘트
+  let ai;
+  if(t.n===0) ai='오늘의 식사를 기록해보세요. 남은 칼로리는 <b>'+T.target.toLocaleString()+' kcal</b>입니다.';
+  else if(remain<0) ai='오늘은 나트륨 섭취가 높은 편입니다. 저녁은 <b>국물 없는 메뉴</b>로 가볍게 조절해보세요.';
+  else if(t.sod>T.sodium*0.8) ai='나트륨이 권장량에 가까워졌어요. 다음 끼니는 <b>국물은 적게, 채소는 넉넉히</b> 어떠세요?';
+  else ai='균형이 좋아요! 남은 칼로리 <b>'+remain.toLocaleString()+' kcal</b> 안에서 단백질·채소를 챙기면 더 좋습니다.';
+  document.getElementById('home-ai').innerHTML=ai;
+
+  // 오늘 먹은 것
+  const list=(S.meals[K]||[]).slice().sort((a,b)=>a.time.localeCompare(b.time));
+  const box=document.getElementById('today-meals');
+  document.getElementById('today-count').textContent='· '+list.length+'개';
+  box.innerHTML = list.length? list.map(m=>
+    '<div class="food"><div class="f-ico">'+m.ico+'</div><div class="f-info"><b>'+m.name+(m.qty>1?' ×'+m.qty:'')+'</b><span>'+m.time+' · '+(m.cat==='drink'?'🥤 종이컵 기준':'')+'</span></div><span class="f-kcal">'+m.kcal.toLocaleString()+'</span></div>'
+  ).join('') : '<div class="empty"><span class="ico">🍽️</span>아직 기록된 식사가 없어요</div>';
+
+  // 영양 요약
+  const set=(id,v,max,label,unit)=>{
+    const p=Math.min(100, max? v/max*100:0);
+    const bar=document.getElementById('b-'+id); bar.style.width=p+'%';
+    bar.parentElement.className='bar'+(p>=100?' danger':p>=80?' warn':'');
+    document.getElementById('n-'+id).textContent = (unit==='g'? v.toFixed(1): Math.round(v).toLocaleString())+' / '+max.toLocaleString()+' '+unit;
+  };
+  set('carb', t.carb, T.carb, '', 'g');
+  set('sugar', t.sugar, T.sugar, '', 'g');
+  set('sodium', t.sod, T.sodium, '', 'mg');
+}
+
+/* ================= 음식 추가 ================= */
+let curCat='home';
+const CAT_TITLE={home:'🍲 가정식 (국·찌개·공기밥 등)', store:'🏪 편의점·외식·마트', drink:'🥤 음료 (종이컵 1잔 ≈ 180ml)'};
+function setCat(c){
+  curCat=c;
+  document.querySelectorAll('#add-cat button').forEach(b=>b.classList.toggle('on', b.dataset.cat===c));
+  document.getElementById('add-note').textContent = c==='drink'
+    ? '종이컵(약 180ml) 1잔 기준입니다. 예: 콜라 3잔, 믹스커피 2잔.'
+    : '식약처·민간 영양 DB 기준 대표값입니다. 조리법에 따라 달라질 수 있어요.';
+  document.getElementById('add-search').placeholder = c==='drink' ? '🔍 음료 검색 (예: 믹스커피)' : '🔍 음식 이름 검색 (예: 김치찌개)';
+  renderFoodList();
+}
+function renderFoodList(){
+  const q=(num('add-search')||'').trim();
+  const keys=Object.keys(FOOD).filter(k=>FOOD[k].cat===curCat && (!q || FOOD[k].n.includes(q) || FOOD[k].n.replace(/\s/g,'').includes(q.replace(/\s/g,''))));
+  const addHint=document.getElementById('add-chip');
+  // 선택된 항목(수량 입력) 패널
+  if(selected){
+    const f=FOOD[selected];
+    addHint.style.display='flex'; addHint.style.cursor='default';
+    const ml=Math.round(CUP_ML*selQty);
+    addHint.innerHTML='<span class="fp-i">'+f.ico+'</span><span class="fp-n">'+f.n+
+      (curCat==='drink'?'<small>약 '+ml+'ml · 1잔 '+CUP_ML+'ml</small>':'<small>1'+f.unit+' '+f.kcal+'kcal</small>')+
+      '</span><span class="stepper"><button onclick="qtyStep(-1)">－</button><b>'+selQty+'</b><button onclick="qtyStep(1)">＋</button></span>'+
+      '<button class="btn btn-primary btn-sm" style="width:auto;padding:9px 14px" onclick="addSelected()">담기</button>';
+  } else { addHint.style.display='none'; }
+
+  document.getElementById('add-list').innerHTML = '<div class="sec-title"><h2>'+CAT_TITLE[curCat]+'</h2></div>' +
+    keys.map(k=>{
+      const f=FOOD[k];
+      const giTag = f.gi>=70?'<span class="gi-tag gi-hi">GI높음</span>' : f.gi>=55?'<span class="gi-tag gi-mi">GI중간</span>' : '<span class="gi-tag gi-lo">GI낮음</span>';
+      return '<div class="food-pick" onclick="pick(\''+k+'\')"><span class="fp-i">'+f.ico+'</span><span class="fp-n">'+f.n+giTag+
+        '<small>'+(curCat==='drink'?('종이컵 1잔 ≈ '+CUP_ML+'ml · 당류 '+f.sugar+'g'):('나트륨 '+f.sod+'mg · 당류 '+f.sugar+'g'))+'</small></span>'+
+        '<span class="fp-k">'+f.kcal+'kcal</span></div>';
+    }).join('') + (keys.length?'':'<div class="empty"><span class="ico">🔍</span>검색 결과가 없어요</div>');
+}
+let selected=null, selQty=1;
+function pick(k){ selected=k; selQty=1; renderFoodList(); }
+function qtyStep(d){ selQty=Math.max(1,selQty+d); renderFoodList(); }
+function addSelected(){
+  if(!selected) return;
+  const K=todayKey();
+  const d=new Date(); const time=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const m=makeMeal(selected, selQty, time);
+  S.meals[K]=S.meals[K]||[]; S.meals[K].push(m); save();
+  // 즉시 반영 피드백
+  const t=dayTotals(K), T=S.target||calcTarget();
+  let msg=m.name+(m.qty>1?' ×'+m.qty:'')+' ('+m.kcal+'kcal) 반영! 남은 '+Math.max(0,T.target-t.kcal).toLocaleString()+' kcal';
+  if(m.gi>=70) msg+=' ⚡GI높음 주의';
+  if(m.sugar>=20) msg+=' 🍬당류 주의';
+  if(t.kcal>T.target) msg+=' 🚨칼로리 초과';
+  toast(msg);
+  selected=null; selQty=1; document.getElementById('add-search').value=''; renderFoodList();
+}
+function scanDemo(kind){
+  toast('['+kind+'] 촬영 시뮬레이션 — 데모에서는 「음식 추가」에서 결과를 확인하세요');
+  setTimeout(()=>go('add', kind==='가정식'?'home':'store'), 700);
+}
+
+/* ================= 기간 관리 ================= */
+let curPeriod='day';
+function setPeriod(p){
+  curPeriod=p;
+  document.querySelectorAll('#period-seg button').forEach(b=>b.classList.toggle('on', b.dataset.p===p));
+  renderPeriod();
+}
+function rangeKeys(p){
+  const out=[];
+  if(p==='day'){ out.push(todayKey()); }
+  else if(p==='week'){ for(let i=6;i>=0;i--) out.push(dOffset(-i)); }
+  else { for(let i=29;i>=0;i--) out.push(dOffset(-i)); }
+  return out;
+}
+function renderPeriod(){
+  const T=S.target||calcTarget();
+  const keys=rangeKeys(curPeriod);
+  const tot=keys.reduce((a,k)=>{const d=dayTotals(k); a.kcal+=d.kcal; a.sod+=d.sod; a.sugar+=d.sugar; a.n+=d.n; return a;},{kcal:0,sod:0,sugar:0,n:0});
+  const daysWith=keys.filter(k=>dayTotals(k).n>0).length||1;
+  const avgKcal=Math.round(tot.kcal/keys.length);
+  const avgSod=Math.round(tot.sod/keys.length);
+  const overDays=keys.filter(k=>dayTotals(k).kcal>T.target).length;
+  const label={day:'일간',week:'주간 (최근 7일)',month:'월간 (최근 30일)'}[curPeriod];
+  document.getElementById('period-date').textContent=label;
+
+  document.getElementById('period-stats').innerHTML=
+    '<div class="stat g"><b>'+avgKcal.toLocaleString()+'</b><span>'+label.split(' ')[0]+' 평균 kcal</span></div>'+
+    '<div class="stat '+(overDays?'r':'g')+'"><b>'+overDays+'</b><span>목표 초과 일수</span></div>'+
+    '<div class="stat '+(avgSod>2000?'y':'g')+'"><b>'+avgSod.toLocaleString()+'</b><span>평균 나트륨 mg</span></div>';
+
+  const chartTitle={day:'오늘 시간대별 누적 칼로리',week:'요일별 칼로리 (목표 '+T.target.toLocaleString()+'kcal)',month:'일별 칼로리 (최근 30일)'}[curPeriod];
+  document.getElementById('period-chart-title').textContent=chartTitle;
+
+  // 차트 렌더
+  const cbox=document.getElementById('period-chart');
+  let bars=[], max=Math.max(T.target,1);
+  if(curPeriod==='day'){
+    const list=(S.meals[todayKey()]||[]).slice().sort((a,b)=>a.time.localeCompare(b.time));
+    let acc=0;
+    bars=list.map(m=>{ acc+=m.kcal; return {label:m.time.slice(0,2)+'시', val:acc, full:acc, over:acc>T.target, cur:false}; });
+    max=Math.max(T.target, acc||T.target);
+  } else {
+    const ks = curPeriod==='week'? keys : keys;
+    bars=ks.map((k,i)=>{
+      const d=dayTotals(k);
+      const dt=new Date(k+'T00:00:00');
+      const wd='일월화수목금토'[dt.getDay()];
+      const lab = curPeriod==='week'? wd : (dt.getDate()+'');
+      return {label:lab, val:d.kcal, full:d.kcal, over:d.kcal>T.target, cur:(k===todayKey())};
+    });
+    max=Math.max(T.target, ...bars.map(b=>b.full), 1);
+  }
+  if(!bars.length){ cbox.innerHTML='<div class="empty"><span class="ico">📊</span>기록이 없어요</div>'; }
+  else {
+    const targetPct=T.target/max*100;
+    cbox.innerHTML='<div style="position:relative">'+
+      '<div class="mini-chart">'+bars.map(b=>{
+        const h=Math.max(3, b.full/max*100);
+        const cls = b.over? 'over' : (b.cur?'today':'');
+        return '<div class="col" title="'+b.full+'kcal"><div class="stick '+cls+'" style="height:'+h+'%"></div><span class="d">'+b.label+'</span></div>';
+      }).join('')+
+      '</div>'+
+      '<div style="position:relative;height:0"><div style="position:absolute;left:0;right:0;bottom:'+targetPct+'%;border-top:1.5px dashed #FF6B4A"></div></div>'+
+      '</div>'+
+      '<div style="font-size:10.5px;color:var(--sub);text-align:right;margin-top:6px">— — 목표선 '+T.target.toLocaleString()+' kcal · <span style="color:var(--red)">■</span> 초과 · <span style="color:var(--mint)">■</span> 오늘</div>';
+  }
+
+  // 기간 기록 리스트
+  const listBox=document.getElementById('period-list');
+  const rows=[];
+  keys.slice().reverse().forEach(k=>{
+    const d=dayTotals(k);
+    if(!d.n) return;
+    const over=d.kcal>T.target;
+    const dt=new Date(k+'T00:00:00');
+    const lbl = (dt.getMonth()+1)+'월 '+dt.getDate()+'일 ('+'일월화수목금토'[dt.getDay()]+')';
+    rows.push('<div class="tl-row"><span class="name">'+lbl+(k===todayKey()?' <span style="color:var(--mint-dark);font-size:11px">오늘</span>':'')+
+      '<div style="font-size:11px;color:var(--sub);font-weight:500;margin-top:2px">'+d.n+'개 식사 · 나트륨 '+d.sod.toLocaleString()+'mg · 당류 '+d.sugar.toFixed(1)+'g</div></span>'+
+      '<span class="val" style="font-weight:800;color:'+(over?'var(--red)':'var(--mint-dark)')+'">'+d.kcal.toLocaleString()+'</span></div>');
+  });
+  document.getElementById('period-list-title').textContent = label+' 기록 ('+rows.length+'일)';
+  listBox.innerHTML = rows.length? rows.join('') : '<div class="empty"><span class="ico">📋</span>이 기간에 기록이 없어요</div>';
+
+  document.getElementById('period-note').innerHTML= label+' 평균 <b>'+avgKcal.toLocaleString()+' kcal</b> · 목표 초과 <b>'+overDays+'일</b> · 총 기록 <b>'+tot.n+'개</b> 식사. 그래프는 실제 기록값 기준입니다.';
+}
+
+/* ================= 기록 ================= */
+function saveVitals(){
+  const g=parseFloat(num('in-glucose')), sy=parseFloat(num('in-sys')), di=parseFloat(num('in-dia'));
+  if(!g && !sy) { toast('혈당 또는 혈압을 입력하세요'); return; }
+  const K=todayKey(); S.vitals[K]=S.vitals[K]||[];
+  const d=new Date(); const time=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  if(g) S.vitals[K].push({t:time, type:num('in-gtype'), glucose:g});
+  if(sy) S.vitals[K].push({t:time, sys:sy, dia:di});
+  save(); toast('수치를 기록했습니다');
+  ['in-glucose','in-sys','in-dia'].forEach(id=>document.getElementById(id).value='');
+  renderRecord();
+}
+function renderRecord(){
+  const K=todayKey(), T=S.target||calcTarget();
+  const dt=new Date();
+  document.getElementById('record-date').textContent=(dt.getMonth()+1)+'월 '+dt.getDate()+'일 ('+'일월화수목금토'[dt.getDay()]+')';
+  const meals=(S.meals[K]||[]).map(m=>({t:m.time,k:'meal',m}));
+  const vit=(S.vitals[K]||[]).map(v=>({t:v.t,k:'vital',v}));
+  const all=meals.concat(vit).sort((a,b)=>a.t.localeCompare(b.t));
+  const tl=document.getElementById('record-timeline');
+  if(!all.length){ tl.innerHTML='<div class="empty"><span class="ico">📋</span>오늘 기록이 아직 없어요</div>'; }
+  else {
+    tl.innerHTML=all.map(x=>{
+      if(x.k==='meal'){
+        const m=x.m; let warn='';
+        if(m.gi>=70) warn='<span style="color:#C92A2A;font-weight:700"> ⚡GI높음</span>';
+        if(m.sugar>=20) warn+='<span style="color:#A61E4D;font-weight:700"> 🍬당류주의</span>';
+        return '<div class="tl-item"><span class="time">'+m.time+' · 식사</span><div class="body">'+m.ico+' '+m.name+(m.qty>1?' ×'+m.qty:'')+warn+
+          '<small>'+m.kcal+' kcal · 나트륨 '+m.sod+'mg · 당류 '+m.sugar+'g'+(m.cat==='drink'?' · 종이컵 기준':'')+'</small></div></div>';
+      }
+      const v=x.v;
+      if(v.glucose){
+        const cls = v.glucose>=180?'#C92A2A':v.glucose>=140?'#E8890C':'#0CA678';
+        return '<div class="tl-item"><span class="time">'+v.t+' · 혈당</span><div class="body" style="border-left:3px solid '+cls+'">🩸 <b style="color:'+cls+'">'+v.glucose+' mg/dL</b> ('+v.type+')'+
+          '<small>'+(v.glucose>=180?'높은 수준 — 전문의 상담 권장':v.glucose>=140?'목표(140 미만)보다 높음':'목표 범위 안')+'</small></div></div>';
+      }
+      return '<div class="tl-item"><span class="time">'+v.t+' · 혈압</span><div class="body">💓 <b>'+v.sys+' / '+v.dia+' mmHg</b>'+
+        '<small>'+(v.sys>=140?'높음 — 관리 필요':v.sys>=130?'주의 범위':'양호')+'</small></div></div>';
+    }).join('');
+  }
+
+  // 주간 혈당 차트 (공복 vs 식후)
+  const keys=rangeKeys('week');
+  const gut=[], post=[];
+  keys.forEach(k=>{
+    const vs=S.vitals[k]||[];
+    const f=vs.find(v=>v.type==='공복'), p=vs.find(v=>v.type==='식후');
+    const dt2=new Date(k+'T00:00:00');
+    gut.push({d:'일월화수목금토'[dt2.getDay()], v:f?f.glucose:0});
+    post.push({d:'일월화수목금토'[dt2.getDay()], v:p?p.glucose:0});
+  });
+  const mx=Math.max(180,...gut.map(x=>x.v),...post.map(x=>x.v));
+  document.getElementById('record-chart').innerHTML='<div class="mini-chart">'+keys.map((k,i)=>
+    '<div class="col"><div class="stick" style="height:'+(gut[i].v/mx*100)+'%;background:#C3FAE8;width:46%;margin-right:2px;display:inline-block" title="공복 '+gut[i].v+'"></div>'+
+    '<span class="d">'+gut[i].d+'</span></div>'
+  ).join('')+'</div>'+
+  '<div style="font-size:10.5px;color:var(--sub);margin-top:6px">막대 = 공복혈당 (mg/dL). 최고 '+mx+' 기준 스케일.</div>';
+}
+
+/* ================= 마이 ================= */
+function renderMy(){
+  const T=S.target||calcTarget();
+  document.getElementById('my-name').textContent=S.profile.name+' 님';
+  document.getElementById('my-basic').textContent=S.profile.age+'세 · '+(S.profile.sex==='male'?'남성':'여성')+' · '+S.profile.height+'cm / '+S.profile.weight+'kg · '+S.profile.job;
+  document.getElementById('my-kcal').textContent=T.target.toLocaleString()+' kcal';
+  document.getElementById('my-carb').textContent=T.carb+' g';
+  document.getElementById('my-sodium').textContent=T.sodium.toLocaleString()+' mg';
+  document.getElementById('my-health').textContent=(S.profile.health||[]).join(' · ');
+}
+
+/* ================= 초기화 ================= */
+function buildAll(){
+  // 온보딩 값 채우기
+  const p=S.profile;
+  if(document.getElementById('ob-name')){
+    document.getElementById('ob-name').value=p.name;
+    document.getElementById('ob-age').value=p.age;
+    document.getElementById('ob-height').value=p.height;
+    document.getElementById('ob-weight').value=p.weight;
+    document.getElementById('ob-activity').value=p.act;
+    document.querySelectorAll('#ob-sex .chip').forEach(c=>c.classList.toggle('on', c.dataset.v===p.sex));
+    document.querySelectorAll('#ob-goal .chip').forEach(c=>c.classList.toggle('on', parseFloat(c.dataset.v)===p.goalFactor));
+    document.querySelectorAll('#ob-job .chip').forEach(c=>c.classList.toggle('on', c.textContent===p.job));
+    document.querySelectorAll('#ob-health .chip').forEach(c=>c.classList.toggle('on', (p.health||[]).includes(c.dataset.v)));
+  }
+  renderHome(); renderPeriod(); renderRecord(); renderMy();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(!S){ S=seedDefaults(); seedDummy(); save(); }
+  ['ob-sex','ob-goal','ob-job','ob-health'].forEach(g=>bindChips(g, g==='ob-sex'||g==='ob-goal'));
+  document.querySelectorAll('#ob-activity,#ob-age,#ob-height,#ob-weight,#ob-name').forEach(el=>el && el.addEventListener('change', ()=>{ if(document.getElementById('ob-result').style.display==='block') onboardCalc(); }));
+  buildAll();
+  // 첫 화면: 등록 화면
+  go('onboard');
+  if(S.onboarded) toast(S.profile.name+'님, 다시 오셨네요! 🌿');
+});
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
